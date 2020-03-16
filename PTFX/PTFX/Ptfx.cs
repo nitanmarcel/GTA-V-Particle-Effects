@@ -1,62 +1,63 @@
-﻿namespace PTFX
-{
-    using GTA;
-    using GTA.Math;
-    using GTA.Native;
-    using NativeUI;
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Windows.Forms;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Windows.Forms;
+using GTA;
+using GTA.Math;
+using GTA.Native;
+using NativeUI;
 
+namespace PTFX
+{
     /// <summary>
-    /// Defines the <see cref="Ptfx" />
+    ///     Defines the <see cref="Ptfx" />
     /// </summary>
     public class Ptfx : Script
     {
         /// <summary>
-        /// Defines the modmenu
-        /// </summary>
-        public ModMenu modmenu;
-
-        /// <summary>
-        /// Defines the updateItem
-        /// </summary>
-        public UIMenuItem updateItem;
-
-        /// <summary>
-        /// Defines the file
+        ///     Defines the file
         /// </summary>
         public string file;
 
         /// <summary>
-        /// Defines the fileName
+        ///     Defines the fileName
         /// </summary>
         public string fileName;
 
         /// <summary>
-        /// Defines the webFile
+        ///     Defines the modmenu
         /// </summary>
-        public string webFile;
+        public ModMenu modmenu;
 
         /// <summary>
-        /// Defines the uri
-        /// </summary>
-        public string uri;
-
-        /// <summary>
-        /// Defines the updateAvailable
+        ///     Defines the updateAvailable
         /// </summary>
         public bool updateAvailable;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Ptfx"/> class.
+        ///     Defines the updateItem
+        /// </summary>
+        public UIMenuItem updateItem;
+
+        /// <summary>
+        ///     Defines the uri
+        /// </summary>
+        public string uri;
+
+        /// <summary>
+        ///     Defines the webFile
+        /// </summary>
+        public string webFile;
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Ptfx" /> class.
         /// </summary>
         public Ptfx()
         {
+            Tick += OnTick;
+            KeyDown += OnKeyDown;
 
-            this.Tick += OnTick;
-            this.KeyDown += OnKeyDown;
 
             uri = "https://raw.githubusercontent.com/nitanmarcel/GTA-V-Particle-Effects/master/PTFX/PTFX/particles.ini";
             fileName = @"scripts/particles.ini";
@@ -67,14 +68,9 @@
 
             try
             {
-
-                System.Net.WebClient wc = new System.Net.WebClient();
+                var wc = new WebClient();
                 webFile = wc.DownloadString(uri);
-                if (file.CompareTo(webFile) > 0)
-                {
-                    updateAvailable = true;
-                }
-
+                if (file.CompareTo(webFile) > 0) updateAvailable = true;
             }
             catch
             {
@@ -91,7 +87,8 @@
 
                 updateMenu.OnItemSelect += UpdateItemSelectHandler;
 
-                updateItem = modmenu.AddMenuItem("Update Databalse", "Updates the ptfx database from github.", updateMenu);
+                updateItem = modmenu.AddMenuItem("Update Database", "Updates the ptfx database from github.",
+                    updateMenu);
             }
 
             var result = IniToDictionary(particlesDB);
@@ -101,18 +98,18 @@
                 entry.Value.Sort();
                 foreach (var v in entry.Value)
                 {
-
                     var item = modmenu.AddMenuItem(v, entry.Key, menu);
                 }
+
                 menu.OnItemSelect += ItemSelectHandler;
             }
         }
 
         /// <summary>
-        /// The OnTick
+        ///     The OnTick
         /// </summary>
-        /// <param name="sender">The sender<see cref="object"/></param>
-        /// <param name="e">The e<see cref="EventArgs"/></param>
+        /// <param name="sender">The sender<see cref="object" /></param>
+        /// <param name="e">The e<see cref="EventArgs" /></param>
         public void OnTick(object sender, EventArgs e)
         {
             modmenu.menuPool.ProcessMenus();
@@ -124,24 +121,21 @@
         }
 
         /// <summary>
-        /// The OnKeyDown
+        ///     The OnKeyDown
         /// </summary>
-        /// <param name="sender">The sender<see cref="object"/></param>
-        /// <param name="e">The e<see cref="System.Windows.Forms.KeyEventArgs"/></param>
-        public void OnKeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+        /// <param name="sender">The sender<see cref="object" /></param>
+        /// <param name="e">The e<see cref="System.Windows.Forms.KeyEventArgs" /></param>
+        public void OnKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.F9)
-            {
-                modmenu.SwitchMenu();
-            }
+            if (e.KeyCode == Keys.F9) modmenu.SwitchMenu();
         }
 
         /// <summary>
-        /// The UpdateItemSelectHandler
+        ///     The UpdateItemSelectHandler
         /// </summary>
-        /// <param name="sender">The sender<see cref="UIMenu"/></param>
-        /// <param name="selectedItem">The selectedItem<see cref="UIMenuItem"/></param>
-        /// <param name="index">The index<see cref="int"/></param>
+        /// <param name="sender">The sender<see cref="UIMenu" /></param>
+        /// <param name="selectedItem">The selectedItem<see cref="UIMenuItem" /></param>
+        /// <param name="index">The index<see cref="int" /></param>
         public void UpdateItemSelectHandler(UIMenu sender, UIMenuItem selectedItem, int index)
         {
             File.WriteAllText(fileName, webFile);
@@ -149,57 +143,62 @@
             modmenu.menuPool.CloseAllMenus();
             modmenu.mainMenu.Visible = false;
 
-            UI.Notify("Database updated, restart the game or open the console (F4) and write Reload() then press enter");
+            UI.Notify(
+                "Database updated, restart the game or open the console (F4) and write Reload() then press enter");
         }
 
         /// <summary>
-        /// The ItemSelectHandler
+        ///     The ItemSelectHandler
         /// </summary>
-        /// <param name="sender">The sender<see cref="UIMenu"/></param>
-        /// <param name="selectedItem">The selectedItem<see cref="UIMenuItem"/></param>
-        /// <param name="index">The index<see cref="int"/></param>
+        /// <param name="sender">The sender<see cref="UIMenu" /></param>
+        /// <param name="selectedItem">The selectedItem<see cref="UIMenuItem" /></param>
+        /// <param name="index">The index<see cref="int" /></param>
         public void ItemSelectHandler(UIMenu sender, UIMenuItem selectedItem, int index)
         {
             Function.Call(Hash.REQUEST_NAMED_PTFX_ASSET, selectedItem.Description);
             Function.Call(Hash.REQUEST_NAMED_PTFX_ASSET, selectedItem.Description);
             Function.Call(Hash._SET_PTFX_ASSET_NEXT_CALL, selectedItem.Description);
 
-            Vector3 pos = Game.Player.Character.GetOffsetInWorldCoords(new Vector3(0, 2, 0));
+            var pos = Game.Player.Character.GetOffsetInWorldCoords(new Vector3(0, 2, 0));
             Vector3 rot = default;
 
-            Function.Call(Hash._START_PARTICLE_FX_AT_COORD, selectedItem.Text, pos.X, pos.Y, pos.Z, rot.X, rot.Y, rot.Z, 1.0f, false, false, false);
+            Function.Call(Hash._START_PARTICLE_FX_AT_COORD, selectedItem.Text, pos.X, pos.Y, pos.Z, rot.X, rot.Y, rot.Z,
+                1.0f, false, false, false);
         }
 
         /// <summary>
-        /// The IniToDictionary
+        ///     The IniToDictionary
         /// </summary>
-        /// <param name="lines">The lines<see cref="IEnumerable{string}"/></param>
-        /// <returns>The <see cref="Dictionary{string, List{string}}"/></returns>
+        /// <param name="lines">The lines<see cref="IEnumerable{string}" /></param>
+        /// <returns>The <see cref="Dictionary{string, List{string}}" /></returns>
         private static Dictionary<string, List<string>> IniToDictionary(IEnumerable<string> lines)
         {
-            Dictionary<string, List<string>> result =
-              new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            var result =
+                new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-            string category = "";
+            var category = "";
 
-            foreach (string line in lines)
+            foreach (var line in lines)
             {
-                string record = line.Trim();
+                var record = line.Trim();
 
                 if (string.IsNullOrEmpty(record) || record.StartsWith("#"))
-                    continue;
+                {
+                }
                 else if (record.StartsWith("[") && record.EndsWith("]"))
+                {
                     category = record.Substring(1, record.Length - 2);
+                }
                 else
                 {
-                    int index = record.IndexOf('=');
+                    var index = record.IndexOf('=');
 
-                    string name = index > 0 ? record.Substring(0, index) : record;
+                    var name = index > 0 ? record.Substring(0, index) : record;
 
-                    if (result.TryGetValue(category, out List<string> list))
+                    if (result.TryGetValue(category, out var list))
                         list.Add(name);
                     else
-                        result.Add(category, new List<string>() { name });
+                        result.Add(category, new List<string> {name});
                 }
             }
 

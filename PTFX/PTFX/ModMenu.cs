@@ -1,27 +1,27 @@
-﻿namespace PTFX
-{
-    using NativeUI;
+﻿using NativeUI;
 
+namespace PTFX
+{
     /// <summary>
-    /// Defines the <see cref="ModMenu" />
+    ///     Defines the <see cref="ModMenu" />
     /// </summary>
     public class ModMenu
     {
         /// <summary>
-        /// Defines the menuPool
-        /// </summary>
-        public MenuPool menuPool;
-
-        /// <summary>
-        /// Defines the mainMenu
+        ///     Defines the mainMenu
         /// </summary>
         public UIMenu mainMenu;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ModMenu"/> class.
+        ///     Defines the menuPool
         /// </summary>
-        /// <param name="_name">The _name<see cref="string"/></param>
-        /// <param name="_description">The _description<see cref="string"/></param>
+        public MenuPool menuPool;
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ModMenu" /> class.
+        /// </summary>
+        /// <param name="_name">The _name<see cref="string" /></param>
+        /// <param name="_description">The _description<see cref="string" /></param>
         public ModMenu(string _name, string _description)
         {
             menuPool = new MenuPool();
@@ -33,12 +33,12 @@
         }
 
         /// <summary>
-        /// The AddMenuItem
+        ///     The AddMenuItem
         /// </summary>
-        /// <param name="_name">The _name<see cref="string"/></param>
-        /// <param name="_description">The _description<see cref="string"/></param>
-        /// <param name="_menu">The _menu<see cref="UIMenu"/></param>
-        /// <returns>The <see cref="UIMenuItem"/></returns>
+        /// <param name="_name">The _name<see cref="string" /></param>
+        /// <param name="_description">The _description<see cref="string" /></param>
+        /// <param name="_menu">The _menu<see cref="UIMenu" /></param>
+        /// <returns>The <see cref="UIMenuItem" /></returns>
         public UIMenuItem AddMenuItem(string _name, string _description, UIMenu _menu = null)
         {
             var menu = _menu ?? mainMenu;
@@ -50,14 +50,15 @@
         }
 
         /// <summary>
-        /// The AddMenuCheckBox
+        ///     The AddMenuCheckBox
         /// </summary>
-        /// <param name="_name">The _name<see cref="string"/></param>
-        /// <param name="_description">The _description<see cref="string"/></param>
-        /// <param name="_defaultValue">The _defaultValue<see cref="bool"/></param>
-        /// <param name="_menu">The _menu<see cref="UIMenu"/></param>
-        /// <returns>The <see cref="UIMenuCheckboxItem"/></returns>
-        public UIMenuCheckboxItem AddMenuCheckBox(string _name, string _description, bool _defaultValue = false, UIMenu _menu = null)
+        /// <param name="_name">The _name<see cref="string" /></param>
+        /// <param name="_description">The _description<see cref="string" /></param>
+        /// <param name="_defaultValue">The _defaultValue<see cref="bool" /></param>
+        /// <param name="_menu">The _menu<see cref="UIMenu" /></param>
+        /// <returns>The <see cref="UIMenuCheckboxItem" /></returns>
+        public UIMenuCheckboxItem AddMenuCheckBox(string _name, string _description, bool _defaultValue = false,
+            UIMenu _menu = null)
         {
             var menu = _menu ?? mainMenu;
             var newitem = new UIMenuCheckboxItem(_name, _defaultValue, _description);
@@ -67,10 +68,10 @@
         }
 
         /// <summary>
-        /// The NewMenu
+        ///     The NewMenu
         /// </summary>
-        /// <param name="_name">The _name<see cref="string"/></param>
-        /// <returns>The <see cref="UIMenu"/></returns>
+        /// <param name="_name">The _name<see cref="string" /></param>
+        /// <returns>The <see cref="UIMenu" /></returns>
         public UIMenu NewMenu(string _name)
         {
             var submenu = menuPool.AddSubMenu(mainMenu, _name);
@@ -80,7 +81,7 @@
         }
 
         /// <summary>
-        /// The SwitchMenu
+        ///     The SwitchMenu
         /// </summary>
         public void SwitchMenu()
         {
@@ -89,7 +90,10 @@
                 menuPool.CloseAllMenus();
                 mainMenu.Visible = false;
             }
-            else mainMenu.Visible = !mainMenu.Visible;
+            else
+            {
+                mainMenu.Visible = !mainMenu.Visible;
+            }
         }
     }
 }
