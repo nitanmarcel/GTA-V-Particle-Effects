@@ -118,6 +118,15 @@ namespace PTFX
                 GTA.UI.Notification.Show("New database update available", true);
                 updateAvailable = false;
             }
+
+            if (modmenu.mainMenu.Visible || modmenu.menuPool.IsAnyMenuOpen())
+            {
+                if (Game.Player.Character.IsVisible) Game.Player.Character.IsVisible = false;
+            }
+            else
+            {
+                if (!Game.Player.Character.IsVisible) Game.Player.Character.IsVisible = true;
+            }
         }
 
         /// <summary>
@@ -161,7 +170,7 @@ namespace PTFX
             {
                 Wait((0));
             }
-            Vector3 pos = Game.Player.Character.FrontPosition - new Vector3(2, 0, 0);
+            Vector3 pos = Game.Player.Character.Position;
             World.CreateParticleEffectNonLooped(asset, selectedItem.Text, pos);
         }
 
