@@ -115,7 +115,7 @@ namespace PTFX
             modmenu.menuPool.ProcessMenus();
             if (updateAvailable)
             {
-                UI.Notify("New database update available", true);
+                GTA.UI.Notification.Show("New database update available", true);
                 updateAvailable = false;
             }
         }
@@ -143,7 +143,7 @@ namespace PTFX
             modmenu.menuPool.CloseAllMenus();
             modmenu.mainMenu.Visible = false;
 
-            UI.Notify(
+            GTA.UI.Notification.Show(
                 "Database updated, restart the game or open the console (F4) and write Reload() then press enter");
         }
 
@@ -155,15 +155,14 @@ namespace PTFX
         /// <param name="index">The index<see cref="int" /></param>
         public void ItemSelectHandler(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            Function.Call(Hash.REQUEST_NAMED_PTFX_ASSET, selectedItem.Description);
-            Function.Call(Hash.REQUEST_NAMED_PTFX_ASSET, selectedItem.Description);
-            Function.Call(Hash._SET_PTFX_ASSET_NEXT_CALL, selectedItem.Description);
-
-            var pos = Game.Player.Character.GetOffsetInWorldCoords(new Vector3(0, 2, 0));
-            Vector3 rot = default;
-
-            Function.Call(Hash._START_PARTICLE_FX_AT_COORD, selectedItem.Text, pos.X, pos.Y, pos.Z, rot.X, rot.Y, rot.Z,
-                1.0f, false, false, false);
+            ParticleEffectAsset asset = new ParticleEffectAsset(selectedItem.Description);
+            asset.Request();
+            while (!asset.IsLoaded)
+            {
+                Wait((0));
+            }
+            Vector3 pos = Game.Player.Character.FrontPosition - new Vector3(2, 0, 0);
+            World.CreateParticleEffectNonLooped(asset, selectedItem.Text, pos);
         }
 
         /// <summary>
