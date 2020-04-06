@@ -1,216 +1,191 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
+using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using GTA;
-using GTA.Math;
-using GTA.Native;
-using NativeUI;
+using GTA.UI;
+using PTFX.Menu;
+using Screen = GTA.UI.Screen;
 
 namespace PTFX
 {
-    /// <summary>
-    ///     Defines the <see cref="Ptfx" />
-    /// </summary>
-    public class Ptfx : Script
+    internal class Ptfx : Script
     {
-        /// <summary>
-        ///     Defines the file
-        /// </summary>
-        public string file;
+        public string dataDownloaded;
+        public string dataPath = @"scripts/particleEffectsCompact.json";
 
-        /// <summary>
-        ///     Defines the fileName
-        /// </summary>
-        public string fileName;
+        public string dataSource =
+            "https://raw.githubusercontent.com/DurtyFree/gta-v-data-dumps/master/particleEffectsCompact.json";
 
-        /// <summary>
-        ///     Defines the modmenu
-        /// </summary>
-        public ModMenu modmenu;
+        public UIMenu MainMenu;
+        public MenuPool MenuPool;
 
-        /// <summary>
-        ///     Defines the updateAvailable
-        /// </summary>
+        public float particlesSize = 1.0f;
+
         public bool updateAvailable;
 
-        /// <summary>
-        ///     Defines the updateItem
-        /// </summary>
-        public UIMenuItem updateItem;
 
-        /// <summary>
-        ///     Defines the uri
-        /// </summary>
-        public string uri;
-
-        /// <summary>
-        ///     Defines the webFile
-        /// </summary>
-        public string webFile;
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Ptfx" /> class.
-        /// </summary>
         public Ptfx()
         {
-            Tick += OnTick;
-            KeyDown += OnKeyDown;
+            MenuPool = new MenuPool();
+            updateAvailable = CheckForUpdate();
+            UpdateMenu();
 
+            Tick += (sender, e) =>
+            {
+                if (updateAvailable)
+                {
+                    Notification.Show("New PTFX Database update available", true);
+                    updateAvailable = false;
+                }
 
-            uri = "https://raw.githubusercontent.com/nitanmarcel/GTA-V-Particle-Effects/master/PTFX/PTFX/particles.ini";
-            fileName = @"scripts/particles.ini";
+                if (MenuPool != null)
+                {
+                    MenuPool.ProcessMenus();
+                    if (!MenuPool.IsAnyMenuOpen() && !Game.Player.Character.IsVisible)
+                        Game.Player.Character.IsVisible = true;
+                }
+            };
 
-            updateAvailable = false;
+            KeyDown += (sender, e) =>
+            {
+                if (MenuPool != null && e.KeyCode == Keys.F9) MenuPool.OpenCloseLastMenu();
+            };
+        }
 
-            file = File.ReadAllText(fileName);
-
+        public bool CheckForInternetConnection()
+        {
             try
             {
-                var wc = new WebClient();
-                webFile = wc.DownloadString(uri);
-                if (file.CompareTo(webFile) > 0) updateAvailable = true;
+                using (var client = new WebClient())
+                {
+                    using (client.OpenRead("http://google.com/generate_204"))
+                    {
+                        return true;
+                    }
+                }
             }
             catch
             {
-                updateAvailable = false;
+                return false;
+            }
+        }
+
+        public bool CheckForUpdate()
+        {
+            if (CheckForInternetConnection())
+            {
+                var exists = File.Exists(dataPath);
+
+                using (var client = new WebClient())
+                {
+                    dataDownloaded = client.DownloadString(dataSource);
+                }
+
+                if (!exists) WriteData();
+
+                return string.Compare(File.ReadAllText(dataPath), dataDownloaded, StringComparison.Ordinal) > 0;
             }
 
-            var particlesDB = file.Split(Environment.NewLine.ToCharArray());
+            return false;
+        }
 
+        public void WriteData()
+        {
+            File.WriteAllText(dataPath, dataDownloaded);
+        }
 
-            modmenu = new ModMenu("Particle Effects", "Particle effects Test");
+        public void UpdateMenu()
+        {
+            if (MenuPool != null) MenuPool.RemoveAllMenus();
+
+            MenuPool = new MenuPool();
+            MainMenu = new UIMenu("Ptfx Menu");
+
             if (updateAvailable)
             {
-                var updateMenu = modmenu.NewMenu("Update Available!");
-
-                updateMenu.OnItemSelect += UpdateItemSelectHandler;
-
-                updateItem = modmenu.AddMenuItem("Update Database", "Updates the ptfx database from github.",
-                    updateMenu);
+                var item = new UIMenuItem("Update PTFX Database", "Database Update Available");
+                MainMenu.AddMenuItem(item);
+                MainMenu.OnItemSelect += (sender, selectedItem, index) =>
+                {
+                    if (selectedItem.Text == "Update PTFX Database")
+                    {
+                        WriteData();
+                        UpdateMenu();
+                        Notification.Show("PTFX Database Updated");
+                    }
+                };
             }
 
-            var result = IniToDictionary(particlesDB);
-            foreach (var entry in result)
+            MainMenu.OnMenuOpen += sender => { Game.Player.Character.IsVisible = false; };
+
+            MenuPool.AddMenu(MainMenu);
+
+            MainMenu.TitleColor = Color.FromArgb(255, 255, 255, 255);
+            MainMenu.TitleBackgroundColor = Color.FromArgb(240, 0, 0, 0);
+            MainMenu.TitleUnderlineColor = Color.FromArgb(255, 255, 90, 90);
+            MainMenu.DefaultBoxColor = Color.FromArgb(160, 0, 0, 0);
+            MainMenu.DefaultTextColor = Color.FromArgb(230, 255, 255, 255);
+            MainMenu.HighlightedBoxColor = Color.FromArgb(130, 237, 90, 90);
+            MainMenu.HighlightedItemTextColor = Color.FromArgb(255, 255, 255, 255);
+            MainMenu.DescriptionBoxColor = Color.FromArgb(255, 0, 0, 0);
+            MainMenu.DescriptionTextColor = Color.FromArgb(255, 255, 255, 255);
+            MainMenu.SubsectionDefaultBoxColor = Color.FromArgb(160, 0, 0, 0);
+            MainMenu.SubsectionDefaultTextColor = Color.FromArgb(180, 255, 255, 255);
+
+            MenuPool.SubmenuItemIndication = "  ~r~>";
+
+            var serializer = new JavaScriptSerializer();
+            var json = File.ReadAllText(dataPath);
+            dynamic res = serializer.DeserializeObject(json);
+
+            foreach (var i in res)
             {
-                var menu = modmenu.NewMenu(entry.Key);
-                entry.Value.Sort();
-                foreach (var v in entry.Value)
+                var subMenu = new UIMenu(i["DictionaryName"]);
+                var effectNames = ((IEnumerable) i["EffectNames"]).Cast<string>().ToList();
+                foreach (var e in effectNames)
                 {
-                    var item = modmenu.AddMenuItem(v, entry.Key, menu);
+                    var item = new UIMenuItem(e, i["DictionaryName"]);
+                    subMenu.AddMenuItem(item);
+
+                    subMenu.OnItemSelect += (sender, selectedItem, index) =>
+                    {
+                        World.RemoveAllParticleEffectsInRange(Game.Player.Character.Position, 10);
+                        Game.Player.Character.RemoveParticleEffects();
+
+                        var asset = new ParticleEffectAsset(selectedItem.Description);
+                        asset.Request();
+
+                        while (!asset.IsLoaded) Wait(0);
+
+                        var particle = World.CreateParticleEffectNonLooped(asset, selectedItem.Text,
+                            Game.Player.Character.Position, default, particlesSize);
+
+                        if (!particle)
+                        {
+                            var particle2 = World.CreateParticleEffect(asset, selectedItem.Text,
+                                Game.Player.Character.Position, default, particlesSize);
+                        }
+
+                        asset.MarkAsNoLongerNeeded();
+                        Screen.ShowSubtitle(selectedItem.Description + "@" + selectedItem.Text + particlesSize);
+                    };
+
+                    subMenu.OnItemLeftRight += (sender, selectedItem, index, direction) =>
+                    {
+                        if (direction == UIMenu.Direction.Right) particlesSize += 0.5f;
+                        else if (particlesSize != 1.0f) particlesSize -= 0.5f;
+
+                        Screen.ShowSubtitle("Particle size = " + particlesSize);
+                    };
                 }
 
-                menu.OnItemSelect += ItemSelectHandler;
+                MenuPool.AddSubMenu(subMenu, MainMenu, i["DictionaryName"]);
             }
-        }
-
-        /// <summary>
-        ///     The OnTick
-        /// </summary>
-        /// <param name="sender">The sender<see cref="object" /></param>
-        /// <param name="e">The e<see cref="EventArgs" /></param>
-        public void OnTick(object sender, EventArgs e)
-        {
-            modmenu.menuPool.ProcessMenus();
-            if (updateAvailable)
-            {
-                GTA.UI.Notification.Show("New database update available", true);
-                updateAvailable = false;
-            }
-
-            if (modmenu.mainMenu.Visible || modmenu.menuPool.IsAnyMenuOpen())
-            {
-                if (Game.Player.Character.IsVisible) Game.Player.Character.IsVisible = false;
-            }
-            else
-            {
-                if (!Game.Player.Character.IsVisible) Game.Player.Character.IsVisible = true;
-            }
-        }
-
-        /// <summary>
-        ///     The OnKeyDown
-        /// </summary>
-        /// <param name="sender">The sender<see cref="object" /></param>
-        /// <param name="e">The e<see cref="System.Windows.Forms.KeyEventArgs" /></param>
-        public void OnKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.F9) modmenu.SwitchMenu();
-        }
-
-        /// <summary>
-        ///     The UpdateItemSelectHandler
-        /// </summary>
-        /// <param name="sender">The sender<see cref="UIMenu" /></param>
-        /// <param name="selectedItem">The selectedItem<see cref="UIMenuItem" /></param>
-        /// <param name="index">The index<see cref="int" /></param>
-        public void UpdateItemSelectHandler(UIMenu sender, UIMenuItem selectedItem, int index)
-        {
-            File.WriteAllText(fileName, webFile);
-            modmenu.mainMenu.RemoveItemAt(0);
-            modmenu.menuPool.CloseAllMenus();
-            modmenu.mainMenu.Visible = false;
-
-            GTA.UI.Notification.Show(
-                "Database updated, restart the game or open the console (F4) and write Reload() then press enter");
-        }
-
-        /// <summary>
-        ///     The ItemSelectHandler
-        /// </summary>
-        /// <param name="sender">The sender<see cref="UIMenu" /></param>
-        /// <param name="selectedItem">The selectedItem<see cref="UIMenuItem" /></param>
-        /// <param name="index">The index<see cref="int" /></param>
-        public void ItemSelectHandler(UIMenu sender, UIMenuItem selectedItem, int index)
-        {
-            ParticleEffectAsset asset = new ParticleEffectAsset(selectedItem.Description);
-            asset.Request();
-            while (!asset.IsLoaded)
-            {
-                Wait((0));
-            }
-            Vector3 pos = Game.Player.Character.Position;
-            World.CreateParticleEffectNonLooped(asset, selectedItem.Text, pos);
-        }
-
-        /// <summary>
-        ///     The IniToDictionary
-        /// </summary>
-        /// <param name="lines">The lines<see cref="IEnumerable{string}" /></param>
-        /// <returns>The <see cref="Dictionary{string, List{string}}" /></returns>
-        private static Dictionary<string, List<string>> IniToDictionary(IEnumerable<string> lines)
-        {
-            var result =
-                new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-
-            var category = "";
-
-            foreach (var line in lines)
-            {
-                var record = line.Trim();
-
-                if (string.IsNullOrEmpty(record) || record.StartsWith("#"))
-                {
-                }
-                else if (record.StartsWith("[") && record.EndsWith("]"))
-                {
-                    category = record.Substring(1, record.Length - 2);
-                }
-                else
-                {
-                    var index = record.IndexOf('=');
-
-                    var name = index > 0 ? record.Substring(0, index) : record;
-
-                    if (result.TryGetValue(category, out var list))
-                        list.Add(name);
-                    else
-                        result.Add(category, new List<string> {name});
-                }
-            }
-
-            return result;
         }
     }
 }
