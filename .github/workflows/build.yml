@@ -1,0 +1,19 @@
+on: [push]
+name: Build Test
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-2019]
+        include:
+          - os: windows-2019
+            vs: [2019]
+    name: Build Test
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Build
+        run: |
+           cd PTFX
+           dotnet build
+      
