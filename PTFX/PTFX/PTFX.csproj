@@ -37,7 +37,7 @@
     <Reference Include="PresentationCore" />
     <Reference Include="ScriptHookVDotNet3, Version=3.0.2.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\Games\steamapps\common\Grand Theft Auto V\ScriptHookVDotNet3.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Grand Theft Auto V\ScriptHookVDotNet3.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
