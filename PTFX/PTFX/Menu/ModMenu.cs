@@ -1616,7 +1616,7 @@ namespace PTFX.Menu
             AddLongString(str);
             Function.Call(Hash.SET_TEXT_FONT, (int) font);
             Function.Call(Hash.SET_TEXT_SCALE, fontsize, fontsize);
-            return Function.Call<float>(Hash._END_TEXT_COMMAND_GET_WIDTH, true);
+            return Function.Call<float>(Hash.END_TEXT_COMMAND_GET_SCREEN_WIDTH_OF_DISPLAY_TEXT, true);
         }
     }
 

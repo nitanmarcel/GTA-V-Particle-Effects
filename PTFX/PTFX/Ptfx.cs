@@ -59,6 +59,8 @@ namespace PTFX
 
         public bool CheckForInternetConnection()
         {
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             try
             {
                 using (var client = new WebClient())
